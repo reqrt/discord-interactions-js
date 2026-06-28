@@ -350,9 +350,19 @@ export class EmbedBuilder {
 
 	toJSON(): EmbedOptions {
 		// Defensive copy so callers mutating the result cannot corrupt the builder.
+		// Nested objects/arrays are cloned too, otherwise mutating them on the
+		// returned value would reach back into the builder's shared references.
 		return {
 			...this.embed,
-			fields: this.embed.fields ? [...this.embed.fields] : undefined,
+			fields: this.embed.fields
+				? this.embed.fields.map((field) => ({ ...field }))
+				: undefined,
+			footer: this.embed.footer ? { ...this.embed.footer } : undefined,
+			author: this.embed.author ? { ...this.embed.author } : undefined,
+			thumbnail: this.embed.thumbnail
+				? { ...this.embed.thumbnail }
+				: undefined,
+			image: this.embed.image ? { ...this.embed.image } : undefined,
 		};
 	}
 }
