@@ -93,7 +93,15 @@ export enum InteractionResponseFlags {
 	EPHEMERAL = 1 << 6,
 
 	/**
-	 * Allows you to create fully component-driven messages
+	 * Enables the Components V2 layout engine for this message.
+	 *
+	 * **When this flag is set, Discord ignores `content` and `embeds` entirely.**
+	 * The whole message must be composed using V2 components (`Section`,
+	 * `TextDisplay`, `Container`, `MediaGallery`, `Separator`, `FileComponent`).
+	 *
+	 * Use the `componentsV2: true` shorthand in {@link MessageOptions} instead of
+	 * setting this flag manually — it is clearer and less error-prone.
+	 *
 	 * @see {@link https://discord.com/developers/docs/components/reference}
 	 */
 	IS_COMPONENTS_V2 = 1 << 15,

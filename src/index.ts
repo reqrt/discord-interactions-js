@@ -9,7 +9,9 @@ export type {
 } from 'discord-api-types/v10';
 // Fluent component and embed builders.
 export * from './builders';
-// Message component types and enums (Button, ActionRow, selects, ...).
+// Message component types and the runtime enums consumers need: ButtonStyleTypes,
+// TextStyleTypes, SeparatorSpacingTypes, ChannelTypes and MessageComponentTypes
+// are all re-exported here as values (not just types).
 export * from './components';
 // Fastify adapter (HTTP-only, gateway-less bots).
 export * from './fastify';

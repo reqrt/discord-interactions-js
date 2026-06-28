@@ -169,4 +169,19 @@ describe('InteractionRouter', () => {
 		expect(errorSpy).toHaveBeenCalled();
 		errorSpy.mockRestore();
 	});
+
+	it('accepts a custom logger and uses it for handler errors', async () => {
+		const mockLogger = { error: jest.fn() };
+		const router = new InteractionRouter({ logger: mockLogger }).command(
+			'produtos',
+			async () => {
+				throw new Error('boom');
+			},
+		);
+		const { interaction } = wired(commandPayload());
+
+		await router.handle(interaction);
+
+		expect(mockLogger.error).toHaveBeenCalled();
+	});
 });

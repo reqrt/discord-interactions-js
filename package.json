@@ -28,7 +28,9 @@
     "build:watch": "tsc --watch",
     "fix": "biome check --apply .",
     "lint": "biome check .",
-    "test": "jest --verbose"
+    "test": "jest --verbose",
+    "test:e2e": "tsx examples/test_server.ts",
+    "test:clear": "tsx -e \"import 'dotenv/config'; import { clearCommands } from './src/index.ts'; clearCommands(process.env.APPLICATION_ID, process.env.BOT_TOKEN, process.env.GUILD_ID).then(() => console.log('Comandos removidos')).catch(console.error)\""
   },
   "devDependencies": {
     "@biomejs/biome": "^2.2.5",
@@ -38,10 +40,12 @@
     "@types/jest": "^30.0.0",
     "@types/node": "^24.0.0",
     "body-parser": "^2.0.0",
+    "dotenv": "^17.4.2",
     "express": "^4.17.1",
     "fastify": "^5.9.0",
     "jest": "^30.2.0",
     "ts-jest": "^29.4.4",
+    "tsx": "^4.22.4",
     "typescript": "^5.0.0"
   },
   "dependencies": {

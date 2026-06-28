@@ -142,6 +142,16 @@ describe('ActionRowBuilder', () => {
 			components: [button],
 		});
 	});
+
+	it('throws when more than 5 components are added', () => {
+		const builder = new ActionRowBuilder();
+		for (let i = 0; i < 6; i++) {
+			builder.addComponent(
+				new ButtonBuilder().setLabel(`btn${i}`).setCustomId(`btn${i}`).toJSON(),
+			);
+		}
+		expect(() => builder.toJSON()).toThrow('5');
+	});
 });
 
 describe('EmbedBuilder', () => {
@@ -167,6 +177,16 @@ describe('EmbedBuilder', () => {
 		const date = new Date('2026-06-28T00:00:00.000Z');
 		const embed = new EmbedBuilder().setTimestamp(date).toJSON();
 		expect(embed.timestamp).toBe('2026-06-28T00:00:00.000Z');
+	});
+
+	it('toJSON returns a copy — mutating it does not affect the builder', () => {
+		const builder = new EmbedBuilder().setTitle('Original').addField('a', '1');
+		const json1 = builder.toJSON();
+		json1.title = 'Mutated';
+		json1.fields?.push({ name: 'b', value: '2' });
+		const json2 = builder.toJSON();
+		expect(json2.title).toBe('Original');
+		expect(json2.fields).toHaveLength(1);
 	});
 });
 
@@ -297,6 +317,14 @@ describe('MediaGalleryBuilder', () => {
 			'at least one item',
 		);
 	});
+
+	it('throws when more than 10 items are added', () => {
+		const builder = new MediaGalleryBuilder();
+		for (let i = 0; i < 11; i++) {
+			builder.addItem({ media: { url: `https://example.com/${i}.png` } });
+		}
+		expect(() => builder.toJSON()).toThrow('10');
+	});
 });
 
 describe('FileComponentBuilder', () => {
@@ -349,6 +377,16 @@ describe('ContainerBuilder', () => {
 			.toJSON();
 		expect(container.components).toHaveLength(2);
 		expect(container.components[1]).toEqual(inner);
+	});
+
+	it('throws when more than 10 direct components are added', () => {
+		const builder = new ContainerBuilder();
+		for (let i = 0; i < 11; i++) {
+			builder.addComponent(
+				new TextDisplayBuilder().setContent(`item ${i}`).toJSON(),
+			);
+		}
+		expect(() => builder.toJSON()).toThrow('10');
 	});
 });
 

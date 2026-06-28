@@ -116,6 +116,7 @@ export class Interaction {
 	readonly followup: InteractionFollowup;
 
 	private readonly _rest: REST;
+	private readonly _hasToken: boolean;
 
 	constructor(payload: APIInteraction, botToken?: string) {
 		const raw = payload as unknown as RawInteraction;
@@ -139,10 +140,13 @@ export class Interaction {
 		this.created_at = new Date(createdMs);
 		this.expires_at = new Date(createdMs + TOKEN_LIFETIME_MS);
 
-		this._rest = new REST({ version: '10' });
-		if (botToken) {
-			this._rest.setToken(botToken);
-		}
+		// Follow-ups authenticate via the interaction token (auth: false), so a bot
+		// token is optional. When one is provided we set it so that other
+		// authenticated REST calls work; otherwise the client is left token-less.
+		this._hasToken = Boolean(botToken);
+		this._rest = botToken
+			? new REST({ version: '10' }).setToken(botToken)
+			: new REST({ version: '10' });
 
 		this.response = new InteractionResponse(this);
 		this.followup = new InteractionFollowup(
@@ -174,6 +178,16 @@ export class Interaction {
 	 */
 	_setReply(reply: InteractionReply): void {
 		this.response._setReply(reply);
+	}
+
+	/**
+	 * Whether this interaction's REST client was constructed with a bot token.
+	 * Follow-ups work without one (they use the interaction token), but other
+	 * authenticated REST calls require it. Internal helper for future use.
+	 * @internal
+	 */
+	get hasToken(): boolean {
+		return this._hasToken;
 	}
 }
 

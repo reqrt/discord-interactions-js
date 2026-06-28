@@ -268,6 +268,11 @@ export class ActionRowBuilder {
 	}
 
 	toJSON(): ActionRow {
+		if (this.components.length > 5) {
+			throw new Error(
+				`An ActionRow cannot have more than 5 components (got ${this.components.length}).`,
+			);
+		}
 		return {
 			type: MessageComponentTypes.ACTION_ROW,
 			components: this.components,
@@ -344,7 +349,11 @@ export class EmbedBuilder {
 	}
 
 	toJSON(): EmbedOptions {
-		return this.embed;
+		// Defensive copy so callers mutating the result cannot corrupt the builder.
+		return {
+			...this.embed,
+			fields: this.embed.fields ? [...this.embed.fields] : undefined,
+		};
 	}
 }
 
@@ -546,6 +555,11 @@ export class MediaGalleryBuilder {
 		if (this.items.length === 0) {
 			throw new Error('A media gallery requires at least one item.');
 		}
+		if (this.items.length > 10) {
+			throw new Error(
+				`A media gallery cannot have more than 10 items (got ${this.items.length}).`,
+			);
+		}
 		const gallery: MediaGallery = {
 			type: MessageComponentTypes.MEDIA_GALLERY,
 			items: this.items,
@@ -642,6 +656,11 @@ export class ContainerBuilder {
 	}
 
 	toJSON(): Container {
+		if (this.components.length > 10) {
+			throw new Error(
+				`A Container cannot have more than 10 direct components (got ${this.components.length}).`,
+			);
+		}
 		const container: Container = {
 			type: MessageComponentTypes.CONTAINER,
 			components: this.components,

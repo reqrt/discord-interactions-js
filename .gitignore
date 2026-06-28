@@ -2,5 +2,9 @@
 node_modules
 dist
 
+# Local secrets for the E2E test server (keep .env.example tracked)
+.env
+.env.local
+
 [._]*.s[a-w][a-z]
 [._]s[a-w][a-z]

@@ -7,6 +7,16 @@ import type {
 } from './interaction';
 import { InteractionType } from './types';
 
+/**
+ * Minimal logger interface used by {@link InteractionRouter} to report handler
+ * errors. Both the global `console` and a Fastify/Pino logger (`fastify.log`)
+ * satisfy it structurally, so production deployments get structured, leveled
+ * logs instead of raw `console.error` output.
+ */
+export interface RouterLogger {
+	error(message: string, ...args: unknown[]): void;
+}
+
 export type CommandHandler = (
 	interaction: CommandInteraction,
 ) => Promise<void> | void;
@@ -43,6 +53,15 @@ export class InteractionRouter {
 	private readonly modals = new Map<string, ModalHandler>();
 	private readonly autocompletes = new Map<string, AutocompleteHandler>();
 	private fallbackHandler?: FallbackHandler;
+	private readonly logger: RouterLogger;
+
+	/**
+	 * @param options.logger - Logger used for handler errors. Defaults to
+	 * `console`; pass `fastify.log` for structured, request-scoped logging.
+	 */
+	constructor(options?: { logger?: RouterLogger }) {
+		this.logger = options?.logger ?? console;
+	}
 
 	/** Registers a handler for a slash command by name. */
 	command(name: string, handler: CommandHandler): this {
@@ -111,7 +130,7 @@ export class InteractionRouter {
 		try {
 			await handler();
 		} catch (error) {
-			console.error(
+			this.logger.error(
 				`[discord-interactions] Handler threw while processing interaction ${interaction.id}:`,
 				error,
 			);
@@ -184,7 +203,7 @@ export class InteractionRouter {
 				ephemeral: true,
 			});
 		} catch (error) {
-			console.error(
+			this.logger.error(
 				`[discord-interactions] Failed to send error response for interaction ${interaction.id}:`,
 				error,
 			);
