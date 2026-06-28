@@ -2,12 +2,22 @@ import {
 	type ActionRow,
 	type Button,
 	ButtonStyleTypes,
+	type Container,
 	type EmojiInfo,
+	type FileComponent,
+	type MediaGallery,
+	type MediaGalleryItem,
+	type MessageComponent,
 	MessageComponentTypes,
+	type Section,
+	type Separator,
+	type SeparatorSpacingTypes,
 	type StringSelect,
 	type StringSelectOption,
+	type TextDisplay,
 	type TextInput,
 	TextStyleTypes,
+	type Thumbnail,
 } from './components';
 import type { EmbedOptions } from './types';
 
@@ -335,5 +345,316 @@ export class EmbedBuilder {
 
 	toJSON(): EmbedOptions {
 		return this.embed;
+	}
+}
+
+/**
+ * Fluent builder for a {@link TextDisplay} component (Components V2). Renders
+ * markdown text as a top-level component.
+ * @see {@link https://discord.com/developers/docs/components/reference#text-display}
+ */
+export class TextDisplayBuilder {
+	private content = '';
+	private id?: number;
+
+	setContent(content: string): this {
+		this.content = content;
+		return this;
+	}
+
+	/** Sets an optional numeric id used to reference this component (V2). */
+	setId(id: number): this {
+		this.id = id;
+		return this;
+	}
+
+	toJSON(): TextDisplay {
+		const component: TextDisplay = {
+			type: MessageComponentTypes.TEXT_DISPLAY,
+			content: this.content,
+		};
+		if (this.id !== undefined) {
+			component.id = this.id;
+		}
+		return component;
+	}
+}
+
+/**
+ * Fluent builder for a {@link Separator} component (Components V2): vertical
+ * spacing with an optional divider line.
+ * @see {@link https://discord.com/developers/docs/components/reference#separator}
+ */
+export class SeparatorBuilder {
+	private divider?: boolean;
+	private spacing?: SeparatorSpacingTypes;
+	private id?: number;
+
+	/** Whether a visible divider line is drawn. Defaults to `true`. */
+	setDivider(divider = true): this {
+		this.divider = divider;
+		return this;
+	}
+
+	setSpacing(spacing: SeparatorSpacingTypes): this {
+		this.spacing = spacing;
+		return this;
+	}
+
+	setId(id: number): this {
+		this.id = id;
+		return this;
+	}
+
+	toJSON(): Separator {
+		const component: Separator = {
+			type: MessageComponentTypes.SEPARATOR,
+		};
+		if (this.divider !== undefined) {
+			component.divider = this.divider;
+		}
+		if (this.spacing !== undefined) {
+			component.spacing = this.spacing;
+		}
+		if (this.id !== undefined) {
+			component.id = this.id;
+		}
+		return component;
+	}
+}
+
+/**
+ * Fluent builder for a {@link Thumbnail} component (Components V2). Typically
+ * used as a {@link Section} accessory.
+ * @see {@link https://discord.com/developers/docs/components/reference#thumbnail}
+ */
+export class ThumbnailBuilder {
+	private url = '';
+	private description?: string;
+	private spoiler?: boolean;
+	private id?: number;
+
+	/** The media url, e.g. `https://...` or `attachment://file.png`. */
+	setUrl(url: string): this {
+		this.url = url;
+		return this;
+	}
+
+	setDescription(description: string): this {
+		this.description = description;
+		return this;
+	}
+
+	setSpoiler(spoiler = true): this {
+		this.spoiler = spoiler;
+		return this;
+	}
+
+	setId(id: number): this {
+		this.id = id;
+		return this;
+	}
+
+	toJSON(): Thumbnail {
+		const component: Thumbnail = {
+			type: MessageComponentTypes.THUMBNAIL,
+			media: { url: this.url },
+		};
+		if (this.description !== undefined) {
+			component.description = this.description;
+		}
+		if (this.spoiler !== undefined) {
+			component.spoiler = this.spoiler;
+		}
+		if (this.id !== undefined) {
+			component.id = this.id;
+		}
+		return component;
+	}
+}
+
+/**
+ * Fluent builder for a {@link Section} component (Components V2): one to three
+ * {@link TextDisplay} components paired with a {@link Thumbnail} or
+ * {@link Button} accessory.
+ * @see {@link https://discord.com/developers/docs/components/reference#section}
+ */
+export class SectionBuilder {
+	private components: TextDisplay[] = [];
+	private accessory?: Thumbnail | Button;
+	private id?: number;
+
+	addTextDisplay(display: TextDisplay): this {
+		this.components.push(display);
+		return this;
+	}
+
+	setAccessory(accessory: Thumbnail | Button): this {
+		this.accessory = accessory;
+		return this;
+	}
+
+	setId(id: number): this {
+		this.id = id;
+		return this;
+	}
+
+	toJSON(): Section {
+		if (this.components.length < 1 || this.components.length > 3) {
+			throw new Error('A section requires between 1 and 3 text displays.');
+		}
+		if (this.accessory === undefined) {
+			throw new Error('A section requires an accessory (call setAccessory).');
+		}
+		const section: Section = {
+			type: MessageComponentTypes.SECTION,
+			components: this.components as Section['components'],
+			accessory: this.accessory,
+		};
+		if (this.id !== undefined) {
+			section.id = this.id;
+		}
+		return section;
+	}
+}
+
+/**
+ * Fluent builder for a {@link MediaGallery} component (Components V2): a grid of
+ * up to ten media items.
+ * @see {@link https://discord.com/developers/docs/components/reference#media-gallery}
+ */
+export class MediaGalleryBuilder {
+	private items: MediaGalleryItem[] = [];
+	private id?: number;
+
+	addItem(item: MediaGalleryItem): this {
+		this.items.push(item);
+		return this;
+	}
+
+	addItems(items: MediaGalleryItem[]): this {
+		this.items.push(...items);
+		return this;
+	}
+
+	setId(id: number): this {
+		this.id = id;
+		return this;
+	}
+
+	toJSON(): MediaGallery {
+		if (this.items.length === 0) {
+			throw new Error('A media gallery requires at least one item.');
+		}
+		const gallery: MediaGallery = {
+			type: MessageComponentTypes.MEDIA_GALLERY,
+			items: this.items,
+		};
+		if (this.id !== undefined) {
+			gallery.id = this.id;
+		}
+		return gallery;
+	}
+}
+
+/**
+ * Fluent builder for a {@link FileComponent} (Components V2). The url must
+ * reference an uploaded attachment, e.g. `attachment://file.pdf`.
+ * @see {@link https://discord.com/developers/docs/components/reference#file}
+ */
+export class FileComponentBuilder {
+	private url = '';
+	private spoiler?: boolean;
+	private id?: number;
+
+	/** The attachment reference, e.g. `attachment://file.pdf`. */
+	setUrl(url: string): this {
+		this.url = url;
+		return this;
+	}
+
+	setSpoiler(spoiler = true): this {
+		this.spoiler = spoiler;
+		return this;
+	}
+
+	setId(id: number): this {
+		this.id = id;
+		return this;
+	}
+
+	toJSON(): FileComponent {
+		const component: FileComponent = {
+			type: MessageComponentTypes.FILE,
+			file: { url: this.url },
+		};
+		if (this.spoiler !== undefined) {
+			component.spoiler = this.spoiler;
+		}
+		if (this.id !== undefined) {
+			component.id = this.id;
+		}
+		return component;
+	}
+}
+
+/**
+ * Fluent builder for a {@link Container} component (Components V2): a styled box
+ * that can hold any other components, including nested containers.
+ * @see {@link https://discord.com/developers/docs/components/reference#container}
+ */
+export class ContainerBuilder {
+	private components: MessageComponent[] = [];
+	private accentColor?: number | null;
+	private spoiler?: boolean;
+	private id?: number;
+
+	addComponent(component: MessageComponent): this {
+		this.components.push(component);
+		return this;
+	}
+
+	addComponents(components: MessageComponent[]): this {
+		this.components.push(...components);
+		return this;
+	}
+
+	/** Sets the accent bar color as a hex number, e.g. `0x5865f2`. */
+	setAccentColor(color: number): this {
+		this.accentColor = color;
+		return this;
+	}
+
+	/** Resets the accent color to `null` (no accent bar). */
+	clearAccentColor(): this {
+		this.accentColor = null;
+		return this;
+	}
+
+	setSpoiler(spoiler = true): this {
+		this.spoiler = spoiler;
+		return this;
+	}
+
+	setId(id: number): this {
+		this.id = id;
+		return this;
+	}
+
+	toJSON(): Container {
+		const container: Container = {
+			type: MessageComponentTypes.CONTAINER,
+			components: this.components,
+		};
+		if (this.accentColor !== undefined) {
+			container.accent_color = this.accentColor;
+		}
+		if (this.spoiler !== undefined) {
+			container.spoiler = this.spoiler;
+		}
+		if (this.id !== undefined) {
+			container.id = this.id;
+		}
+		return container;
 	}
 }

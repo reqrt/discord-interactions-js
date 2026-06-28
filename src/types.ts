@@ -3,7 +3,15 @@ import {
 	ApplicationCommandOptionType,
 	ComponentType,
 } from 'discord-api-types/v10';
-import type { ActionRow } from './components';
+import type {
+	ActionRow,
+	Container,
+	FileComponent,
+	MediaGallery,
+	Section,
+	Separator,
+	TextDisplay,
+} from './components';
 
 /**
  * The type of interaction this request is.
@@ -151,19 +159,71 @@ export interface AttachmentOptions {
 }
 
 /**
+ * Components allowed at the top level of a classic (V1) message — only
+ * {@link ActionRow}, alongside `content` and `embeds`.
+ */
+export type V1TopLevelComponent = ActionRow;
+
+/**
+ * Components allowed at the top level of a Components V2 message. When V2 is
+ * active, Discord ignores `content` and `embeds` and renders the message
+ * entirely from its components.
+ * @see {@link https://discord.com/developers/docs/components/reference}
+ */
+export type V2TopLevelComponent =
+	| ActionRow
+	| Section
+	| TextDisplay
+	| Separator
+	| Container
+	| MediaGallery
+	| FileComponent;
+
+/**
+ * Any component that can appear at the top level of a message, in either the
+ * classic (V1) or the Components V2 layout mode.
+ */
+export type TopLevelComponent = V1TopLevelComponent | V2TopLevelComponent;
+
+/**
  * Options accepted everywhere a message is created or edited (initial
  * responses, message updates, and follow-ups).
  */
 export interface MessageOptions {
 	content?: string;
 	embeds?: EmbedOptions[];
-	components?: ActionRow[];
+	/**
+	 * The message's top-level components.
+	 *
+	 * **Components V1 (default):** only {@link ActionRow} is allowed, and the
+	 * message may also use `content` and `embeds`.
+	 *
+	 * **Components V2** (when `flags` includes `IS_COMPONENTS_V2`, or
+	 * `componentsV2: true`): `ActionRow`, `Section`, `TextDisplay`, `Separator`,
+	 * `Container`, `MediaGallery`, and `FileComponent` are allowed at the top
+	 * level. In this mode Discord **ignores `content` and `embeds`** — the whole
+	 * message is defined by its components.
+	 *
+	 * @see {@link https://discord.com/developers/docs/components/reference}
+	 */
+	components?: V1TopLevelComponent[] | V2TopLevelComponent[];
 	/**
 	 * Raw message flags. Combine values from {@link InteractionResponseFlags}.
 	 */
 	flags?: InteractionResponseFlags | number;
 	/** Shorthand for `flags: InteractionResponseFlags.EPHEMERAL` (`64`). */
 	ephemeral?: boolean;
+	/**
+	 * Enables Components V2 by adding the `IS_COMPONENTS_V2` flag (`1 << 15`) to
+	 * the message flags.
+	 *
+	 * When `true`, Discord ignores `content` and `embeds`; compose the whole
+	 * message with the V2 builders (`SectionBuilder`, `ContainerBuilder`,
+	 * `MediaGalleryBuilder`, ...).
+	 *
+	 * @see {@link https://discord.com/developers/docs/components/reference}
+	 */
+	componentsV2?: boolean;
 	allowed_mentions?: AllowedMentions;
 	attachments?: AttachmentOptions[];
 }

@@ -1,11 +1,11 @@
 import type { RawFile } from '@discordjs/rest';
-import type { ActionRow } from './components';
 import {
 	type AllowedMentions,
 	type AttachmentOptions,
 	type EmbedOptions,
 	InteractionResponseFlags,
 	type MessageOptions,
+	type TopLevelComponent,
 } from './types';
 
 /**
@@ -15,7 +15,7 @@ import {
 export interface ResolvedMessagePayload {
 	content?: string;
 	embeds?: EmbedOptions[];
-	components?: ActionRow[];
+	components?: TopLevelComponent[];
 	flags?: number;
 	allowed_mentions?: AllowedMentions;
 	attachments?: Array<{ id: number; filename?: string; description?: string }>;
@@ -39,6 +39,9 @@ export function resolveMessageData(options: MessageOptions): ResolvedMessage {
 	let flags = options.flags ?? 0;
 	if (options.ephemeral) {
 		flags |= InteractionResponseFlags.EPHEMERAL;
+	}
+	if (options.componentsV2) {
+		flags |= InteractionResponseFlags.IS_COMPONENTS_V2;
 	}
 
 	const body: ResolvedMessagePayload = {};
