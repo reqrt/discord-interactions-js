@@ -33,6 +33,93 @@ To learn more about building on Discord, see [https://discord.dev](https://disco
 npm install discord-interactions
 ```
 
+## HTTP-only Bots (Fastify + Router)
+
+In addition to the Express `verifyKeyMiddleware`, this library ships a stateless,
+gateway-less toolkit for building interaction bots on top of Fastify — designed
+so a single endpoint can serve many bots (multi-tenant), each with its own
+`application_id`, `public_key`, and `bot_token`. There is no WebSocket gateway,
+no intents, no sharding, and no global state.
+
+Install the runtime peers used by the HTTP toolkit:
+
+```sh
+npm install @discordjs/rest discord-api-types fastify
+```
+
+The `discordInteractions` Fastify plugin preserves the raw request body (required
+for Ed25519 verification), verifies the signature, answers `PING` automatically,
+and hands you a fully-typed `Interaction`:
+
+```ts
+import Fastify from 'fastify';
+import {
+  discordInteractions,
+  InteractionRouter,
+  ButtonBuilder,
+  ActionRowBuilder,
+  EmbedBuilder,
+  ButtonStyleTypes,
+} from 'discord-interactions';
+
+const app = Fastify();
+const router = new InteractionRouter();
+
+router.command('produtos', async (inter) => {
+  await inter.defer(true); // ephemeral "thinking..."
+
+  const embed = new EmbedBuilder()
+    .setTitle('Nossos Produtos')
+    .setColor(0x5865f2)
+    .toJSON();
+
+  const row = new ActionRowBuilder()
+    .addComponent(
+      new ButtonBuilder()
+        .setLabel('Ver Produto')
+        .setCustomId('view:produto_123')
+        .setStyle(ButtonStyleTypes.PRIMARY)
+        .toJSON(),
+    )
+    .toJSON();
+
+  await inter.followup.edit({ embeds: [embed], components: [row] });
+});
+
+// Dynamic ids: matches "view:produto_123", "view:anything", ...
+router.component_prefix('view:', async (inter) => {
+  const productId = inter.custom_id.split(':')[1];
+  await inter.response.send_message({
+    content: `Você selecionou o produto ${productId}`,
+    ephemeral: true,
+  });
+});
+
+app.register(discordInteractions, {
+  path: '/interactions',
+  // Single-bot: pass `publicKey: '...'`.
+  // Multi-tenant: resolve the key per application_id (e.g. from Redis/Postgres).
+  getPublicKey: async (applicationId) => lookupPublicKey(applicationId),
+  onInteraction: (interaction) => router.handle(interaction),
+});
+
+app.listen({ port: 3000, host: '0.0.0.0' });
+```
+
+| Export | Description |
+|--------|-------------|
+| `discordInteractions` | Fastify plugin: raw-body parsing, signature verification, auto-PING, dispatch. |
+| `InteractionRouter` | Routes by command name, component `custom_id` (exact or prefix), modal, and autocomplete. |
+| `Interaction` (+ `CommandInteraction`, `ComponentInteraction`, `ModalInteraction`, `AutocompleteInteraction`) | Typed wrappers around a received interaction, with `response` and `followup` helpers. |
+| `InteractionResponse` | The immediate reply (message, defer, update, modal, autocomplete, premium). |
+| `InteractionFollowup` | REST messaging within the 15-minute token window (send/edit/delete/fetch). |
+| `ButtonBuilder`, `StringSelectBuilder`, `TextInputBuilder`, `ActionRowBuilder`, `EmbedBuilder` | Fluent component and embed builders. |
+| `registerGlobalCommands`, `registerGuildCommands`, `getCommands`, `clearCommands` | Slash command registration helpers. |
+
+The follow-up endpoints authenticate via the interaction token in the URL, so
+they work without a bot token. Provide one (single-bot, or `getBotToken` for
+multi-tenant) only if your handlers make additional authenticated REST calls.
+
 ## Interactions Usage
 
 Use the `InteractionType` and `InteractionResponseType` enums to figure out how to respond to an interactions' webhook.
